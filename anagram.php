@@ -1,8 +1,9 @@
 <?php
-print_r( $argv);
 include_once 'Dictionary.php';
 
-$dictionary = new Dictionary( $argv[1]);
+
+$strToCheck = "poultry outwits ants";
+$dictionary = new Dictionary( $argv[1], $strToCheck);
 
 foreach( $dictionary->words as $key=>$entry)
 {
@@ -14,4 +15,3 @@ foreach( $dictionary->words as $key=>$entry)
 	echo "$str\n";
 }
 echo count($dictionary->words)."\n";
-?>

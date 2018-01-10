@@ -1,48 +1,111 @@
 <?php
+/********
+Class Dictionary
+To keep all the words from file that are subset of the phrase from which anagrams must be found
+*********/
 class Dictionary
 {
 	public $words = array();
-	function __construct( $filename)
+	public $evalStr = "";
+	public $evalWObj = NULL;
+	function __construct( $filename, $phrase="")
 	{
+		$this->evalStr = $phrase;
+		$this->evalWObj = new Word( str_replace(" ", "", $this->evalStr));
+
 		$file = fopen($filename,"r");
 		while(! feof($file))
 		{
-			$newWord = fgets($file);
-			if( strlen($newWord))
+			//Reading a line/word from the file
+			$newWord = str_replace( " ", "",  trim( fgets($file)));
+			if( strlen($newWord) > 0)
 			{
 				$nw = new Word($newWord);
 				$newKey = $nw->wkey;
-				if( array_key_exists($newKey, $this->words) && !in_array($nw->variants[0], $this->words[$newKey]->variants))
+				//Check if the newly read word is a subset of the input phrase so it can be included in the dictionary
+				if( Dictionary::isSubSet($nw->wkeyArr, $this->evalWObj->wkeyArr))
 				{
-					$this->words[$newKey]->variants[] = $nw->variants[0];					
-				} 
+					//The key of the new word already exists
+					if( array_key_exists($newKey, $this->words) && !in_array($nw->variants[0], $this->words[$newKey]->variants))
+					{
+						//Adding the new word as a variant of an existent key in dictionary
+						$this->words[$newKey]->variants[] = $nw->variants[0];
+						unset($nw);
+					} 
+					else
+					{
+						//New key found so adding thw whole Word object to the dictionary
+						$this->words[$newKey] = $nw;
+					}
+				}
 				else
 				{
-					$this->words[$newKey] = $nw;
+					//the newly read word is not worthy... get rid of it
+					unset($nw);
 				}
 				
 			}
 		}
 		fclose($file);
+
+		ksort($this->words);
+	}
+
+	//Checks if array1 is subset of array2
+	function isSubSet( $array1, $array2)
+	{
+		//$a2 = $array2;		
+		if( count($array1) > count($array2))
+		{
+			return FALSE;
+		}
+
+		foreach( $array1 as $letter )
+		{
+			$foundIn = array_search($letter, $array2);
+			if( $foundIn !== FALSE )
+			{
+				unset($array2[$foundIn]);
+			}
+			else
+			{
+				return FALSE;
+			}
+		}
+		//error_log("Array1:".implode("", $array1)." | TO BE EVALUATED:".implode("", $a2)." Final:".implode("", $array2)."\n");
+
+		return TRUE;
+	}
+
+	//Returns dictionary's Word object corresponding with searchWord's key
+	function getWordAnagrams( $searchWord)
+	{
+		$searchWordObj = new Word( str_replace(" ", "", $searchWord));
+		if( !empty( $this->words[$searchWordObj->wkey]))
+		{
+			return $this->words[$searchWordObj->wkey];
+		}
+		else
+		{
+			return FALSE;
+		}
 	}
 }
 
-
+/****
+Class Word to keep the key (alphabeticaly ordered string) from a word and its variations
+*****/
 class Word
 {
-	public /*$word, $transliterated, $onlyalpha,*/ $variants, $wkey;
+	public $variants, $wkey, $wkeyArr;
 	function __construct( $word)
 	{
-		/*$this->word = trim($word);
-		$this->transliterated =  transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', $this->word);
-		$this->variants = array();
-		$this->onlyalpha = str_replace( "'", "", $this->transliterated);*/
-		$w = trim($word);
+		$w = $word;
 		$wt = transliterator_transliterate('Any-Latin; Latin-ASCII; Lower()', $w);
 		$wa = str_replace("'", "", $wt);
-		$wArr = str_split( $wa);
-		sort($wArr);
-		$this->wkey = implode("", $wArr);
+		$this->wkeyArr = str_split( $wa);
+		sort($this->wkeyArr);
+		$this->wkey = implode("", $this->wkeyArr);
 		$this->variants = array( $w);
 		if( !in_array($wt, $this->variants))
 		{
