@@ -1,11 +1,16 @@
 <?php
-include_once 'Dictionary.php';
+include_once 'AnagramFinder.php';
 
 
 $strToCheck = "poultry outwits ants";
-$dictionary = new Dictionary( $argv[1], $strToCheck);
+$minWordLen = 4;
+$pathToWordsList = $argv[1];
 
-foreach( $dictionary->words as $key=>$entry)
+$aF = new AnagramFinder( $pathToWordsList, $strToCheck, $minWordLen);
+$aF->buildAnagrams();
+
+
+/*foreach( $aF->dictionary->words as $key=>$entry)
 {
 	$str = "[$key]->";
 	foreach( $entry->variants as $variant)
@@ -14,4 +19,4 @@ foreach( $dictionary->words as $key=>$entry)
 	}
 	echo "$str\n";
 }
-echo count($dictionary->words)."\n";
+echo count($aF->dictionary->words)."\n";*/

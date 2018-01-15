@@ -8,17 +8,18 @@ class Dictionary
 	public $words = array();
 	public $evalStr = "";
 	public $evalWObj = NULL;
-	function __construct( $filename, $phrase="")
+	public $minWordLen	= 0;
+	function __construct( $filename, $phrase="", $minWordLen)
 	{
 		$this->evalStr = $phrase;
 		$this->evalWObj = new Word( str_replace(" ", "", $this->evalStr));
-
+		$this->minWordLen = $minWordLen;
 		$file = fopen($filename,"r");
 		while(! feof($file))
 		{
 			//Reading a line/word from the file
 			$newWord = str_replace( " ", "",  trim( fgets($file)));
-			if( strlen($newWord) > 0)
+			if( strlen($newWord) >= $this->minWordLen)
 			{
 				$nw = new Word($newWord);
 				$newKey = $nw->wkey;
@@ -51,6 +52,11 @@ class Dictionary
 		ksort($this->words);
 	}
 
+	function getEvalObj()
+	{
+		return $this->evalWObj;
+	}
+
 	//Checks if array1 is subset of array2
 	function isSubSet( $array1, $array2)
 	{
@@ -75,6 +81,25 @@ class Dictionary
 		//error_log("Array1:".implode("", $array1)." | TO BE EVALUATED:".implode("", $a2)." Final:".implode("", $array2)."\n");
 
 		return TRUE;
+	}
+
+	//Get all elements from array 1 that are not in array 2
+	function getDifference( $array1, $array2)
+	{
+		$copyArray1 = $array1;
+		if( count($copyArray1) <= count($array2))
+		{
+			return array();
+		}
+		for( $i = 0; $i < count($array2); $i++)
+		{
+			$foundIn = array_search($array2[$i], $copyArray1);
+			if( $foundIn !== FALSE)
+			{
+				unset( $copyArray1[$foundIn]);
+			}
+		}
+		return $copyArray1;
 	}
 
 	//Returns dictionary's Word object corresponding with searchWord's key
